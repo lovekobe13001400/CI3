@@ -53,6 +53,11 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
+/*
+方法2:init.php配置相关环境
+define('ENVIRONMENT', 'dev' === get_cfg_var('env') ? 'development' : 'production');
+获取当前环境
+*/
 	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
 
 /*
@@ -62,6 +67,7 @@
  *
  * Different environments will require different levels of error reporting.
  * By default development will show errors but testing and live will hide them.
+ * 对不同的环境,不一样的错误处理
  */
 switch (ENVIRONMENT)
 {
@@ -97,6 +103,7 @@ switch (ENVIRONMENT)
  * This variable must contain the name of your "system" folder.
  * Include the path if the folder is not in the same directory
  * as this file.
+ * 设置系统目录
  */
 	$system_path = 'system';
 
@@ -112,6 +119,7 @@ switch (ENVIRONMENT)
  * http://codeigniter.com/user_guide/general/managing_apps.html
  *
  * NO TRAILING SLASH!
+ * 设置应用目录
  */
 	$application_folder = 'application';
 
@@ -187,6 +195,8 @@ switch (ENVIRONMENT)
  * ---------------------------------------------------------------
  *  Resolve the system path for increased reliability
  * ---------------------------------------------------------------
+ *命令行模式先把当前目录切换到本文件所在目录
+ *参考:http://blog.163.com/wu_guoqing/blog/static/196537018201272512616394/
  */
 
 	// Set the current directory correctly for CLI requests
@@ -194,7 +204,7 @@ switch (ENVIRONMENT)
 	{
 		chdir(dirname(__FILE__));
 	}
-
+	////获取觉得绝对路径,减少php的一些检测机制。
 	if (($_temp = realpath($system_path)) !== FALSE)
 	{
 		$system_path = $_temp.'/';
@@ -206,6 +216,7 @@ switch (ENVIRONMENT)
 	}
 
 	// Is the system path correct?
+
 	if ( ! is_dir($system_path))
 	{
 		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
@@ -219,18 +230,26 @@ switch (ENVIRONMENT)
  * -------------------------------------------------------------------
  */
 	// The name of THIS file
+	//入口文件的文件名
 	define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 
 	// Path to the system folder
+	//统一以/为目录分隔符（windows下是/或\，linux下默认是/）
 	define('BASEPATH', str_replace('\\', '/', $system_path));
 
 	// Path to the front controller (this file)
+	//前端控制器所在的目录。在CI里面就是这个入口文件
 	define('FCPATH', dirname(__FILE__).'/');
 
 	// Name of the "system folder"
+	// 取得核心文件的目录名，具体做法如下：
+ 	//trim(BASHPATH,'/'):先把BASHPATH给修剪一下，去掉首尾的‘/’
+ 	//先后通过strrchr(xxx,'/')：把上述得出来的字符串，截取出以最后一个'/'开头到结尾的一个子字符串。
+ 	//最后再trim(xxx,'/')，去掉两端的‘/’，实质这里是去掉左边的'/'。
 	define('SYSDIR', trim(strrchr(trim(BASEPATH, '/'), '/'), '/'));
 
 	// The path to the "application" folder
+	 //判断是否为正确的目录
 	if (is_dir($application_folder))
 	{
 		if (($_temp = realpath($application_folder)) !== FALSE)
@@ -253,6 +272,7 @@ switch (ENVIRONMENT)
 	}
 
 	// The path to the "views" folder
+	
 	if ( ! is_dir($view_folder))
 	{
 		if ( ! empty($view_folder) && is_dir(APPPATH.$view_folder.DIRECTORY_SEPARATOR))
@@ -290,3 +310,13 @@ switch (ENVIRONMENT)
  * And away we go...
  */
 require_once BASEPATH.'core/CodeIgniter.php';
+/**
+ * 总结一下这个文件做了一些什么：
+ * 第一，先设置好当前项目的运行环境，这里主要是错误报告方面的设置，这个放在了整个项目运行的第一位。
+ * 第二，再配置好一些目录信息，这些都是一定开发人员可以自定义的东西。然后根据配置目录信息，CI会把一些以后会有用的东西定义为常量
+ *   ，为什么要这样做呢？因为以后会在很多不同地方，例如CI里面的各个组件都会用到路径相关的信息，在这里统一计算并定义，以后方
+ *   便引用和修改。
+ * 第三，引入CodeIgniter.php进行工作。
+ * 
+ * 移步至核心文件目录下的（点击：）core/CodeIgniter.php...
+ */
