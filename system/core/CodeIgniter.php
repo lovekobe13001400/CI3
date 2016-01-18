@@ -36,7 +36,22 @@
  * @filesource
  */
 defined('BASEPATH') OR exit('No direct script access allowed');
-
+/**
+ * 上面：
+ * 这个BASEPATH，就是在入口文件(index.php)里面定义的那个BASEPATH～
+ * 如果没有定义BASEPATH，那么直接退出，下面程序都不执行。其实除了入口文件index.php开头没有这句话之外，所有文件都会有这句话
+ * 也就是说，所有文件都不能单独运行，一定是index.php在运行过程中把这些文件通
+ * 过某种方式引进来运行，所以只有入口文件index.php才能被访问。
+ *
+ */
+/**
+ * 弱弱地建议：
+ *  其实把CodeIgniter.php这个文件的代码运行一次，就是整个CI应用都完成了一次完整的运作流程了。
+ *  其中会加载一些组件，引入很多外部文件，等等。所以建议在阅读此文件代码的时候，第一遍先阅读它的
+ *  大概流程，也就是说不必进入相应的组件、函数文件中去。第二遍看的时候才具体看那些函数、组件里面是怎
+ *  么实现的。当然要看个人需要咯～
+ *
+ */
 /**
  * System Initialization File
  *
@@ -55,6 +70,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @var	string
  *
  */
+//定义CI版本
 	define('CI_VERSION', '3.0.2');
 
 /*
@@ -62,6 +78,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *  Load the framework constants
  * ------------------------------------------------------
  */
+	//echo APPPATH.'config/'.ENVIRONMENT.'/constants.php';exit();
+	//路径：application/config/development/constants.php
+	//constants.php是系统常量文件的配置
+	//加载配置的常量。这个配置文件里面默认已经有一些和文件有关的常量。
+ 
+ //下面这个判断可以看出一开始我们在index.php里面定义的那个ENVIRONMENT的作用之一，如果是定义某个环境，
+ //会调用相应的配置文件，这样就可以使得应用在相应的环境中运行。不仅仅是这个常量的配置文件是这样子，
+ //以后你会发现，其实全部配置文件都是先判断当前环境再引入。
+ //方便切换，只需在index.php里面改一下ENVIRONMENT的值。
+	//当然啦，如果压根没有这个环境下的配置文件，就会调用默认的。CI手册上也有说，各种环境下的相同的配置文件，可以直接放在
+	//config/下，而不需要每个环境的目录下都有。
 	if (file_exists(APPPATH.'config/'.ENVIRONMENT.'/constants.php'))
 	{
 		require_once(APPPATH.'config/'.ENVIRONMENT.'/constants.php');
@@ -74,6 +101,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *  Load the global functions
  * ------------------------------------------------------
  */
+	//Common.php包括很多全局函数
 	require_once(BASEPATH.'core/Common.php');
 
 
@@ -85,6 +113,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 if ( ! is_php('5.4'))
 {
+	//这个magic_quotes就是会自动把那些由$_GET,$_POST等传过来的值进行处理，加\。
+	//这个东西最好不要打开，虽然某些时候会帮到忙，不过过滤、转义等处理最后还是手动做好一些。
+	//php5.3以上默认是把这个东西关掉的(linux下/etc/php.ini里面)。这个东西本来就不应该有。
+	//ini_set：为一个配置选项设置值
 	ini_set('magic_quotes_runtime', 0);
 
 	if ((bool) ini_get('register_globals'))
