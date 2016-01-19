@@ -48,7 +48,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/
  */
+/**
+ * Common Functions
+ */
 
+/**
+ * 为什么还要定义这些全局函数呢？比如说，下面有很多函数，如get_config()、config_item()这两个方法不是应该由
+ * core/Config.php这个组件去做么？那个load_class()不应该由core/Loader.php去做么？ 把这些函数定义出来貌似
+ * 感觉架构变得不那么优雅，有点多余。
+ * 其实是出于这样一种情况：
+ * 比如说，如果一切和配置有关的动作都由Config组件来完成，一切加载的动作都由Loader来完成，
+ * 试想一下，如果我要加载Config组件，那么，必须得通过Loader来加载，所以Loader必须比Config要更早实例化，
+ * 但是如果Loader实例化的时候需要一些和Loader有关的配置信息才能实例化呢？那就必须通过Config来为它取得配置信息。
+ * 这里就出现了鸡和鸡蛋的问题。。
+ * 我之前写自己的框架也纠结过这样的问题，后来参考了YII框架，发现它里面其实都有同样的问题，它里面有个Exception的组件，
+ * 但是在加载这个Exception组件之前，在加载其它组件的时候，如果出错了，那谁来处理异常和错误信息呢？答案就是先定义一些公共的函数。
+ * 所以这些公共函数就很好地解决了这个问题，这也是为什么Common.php要很早被引入。
+ *
+ */
 // ------------------------------------------------------------------------
 
 if ( ! function_exists('is_php'))
@@ -59,6 +76,7 @@ if ( ! function_exists('is_php'))
 	 * @param	string
 	 * @return	bool	TRUE if the current version is $version or higher
 	 */
+	//判断当前php版本是不是$version以上的。调用version_compare()这个函数
 	function is_php($version)
 	{
 		static $_is_php;
@@ -66,6 +84,7 @@ if ( ! function_exists('is_php'))
 
 		if ( ! isset($_is_php[$version]))
 		{
+			//>=规定的版本
 			$_is_php[$version] = version_compare(PHP_VERSION, $version, '>=');
 		}
 
@@ -88,6 +107,8 @@ if ( ! function_exists('is_really_writable'))
 	 * @param	string
 	 * @return	bool
 	 */
+	//该函数和php官方手册上面写的差不多，兼容linux/Unix和windows系统：
+	//http://www.php.net/manual/en/function.is-writable.php
 	function is_really_writable($file)
 	{
 		// If we're on a Unix server with safe_mode off we call is_writable
@@ -138,6 +159,7 @@ if ( ! function_exists('load_class'))
 	 * @param	string	an optional argument to pass to the class constructor
 	 * @return	object
 	 */
+	//加载类。默认是加载libraries里面的，如果要加载核心组件，$directory就为'core'
 	function &load_class($class, $directory = 'libraries', $param = NULL)
 	{
 		static $_classes = array();
@@ -199,7 +221,7 @@ if ( ! function_exists('load_class'))
 }
 
 // --------------------------------------------------------------------
-
+//记录有哪些类是已经被加载的。
 if ( ! function_exists('is_loaded'))
 {
 	/**
@@ -235,6 +257,11 @@ if ( ! function_exists('get_config'))
 	 * @param	array
 	 * @return	array
 	 */
+	//这个是读取配置信息的函数，在Config类被实例化之前，由它暂负责。
+	//而在Config类被实例化之前，我们需要读取的配置信息，其实仅仅是config.php这个主配置文件的。所以这个方法是不能读出
+	//config/下其它配置文件的信息的。
+	//这个$replace参数，是提供一个临时替换配置信息的机会，仅一次，因为执行一次后，配置信息都会保存在静态变量$_config中，不能
+	//改变。
 	function &get_config(Array $replace = array())
 	{
 		static $config;
@@ -290,6 +317,7 @@ if ( ! function_exists('config_item'))
 	 * @param	string
 	 * @return	mixed
 	 */
+	//取得配置数组中某个元素
 	function config_item($item)
 	{
 		static $_config;
@@ -387,7 +415,8 @@ if ( ! function_exists('is_cli'))
 }
 
 // ------------------------------------------------------------------------
-
+//这里的show_error和下面的show_404以及 _exception_handler这三个错误的处理，实质都是由Exception组件完成的。
+//详见core/Exception.php.
 if ( ! function_exists('show_error'))
 {
 	/**
@@ -490,6 +519,7 @@ if ( ! function_exists('set_status_header'))
 	 * @param	string
 	 * @return	void
 	 */
+	//此函数构造一个响应头。$stati为响应码与其响应说明。
 	function set_status_header($code = 200, $text = '')
 	{
 		if (is_cli())
@@ -596,6 +626,7 @@ if ( ! function_exists('_error_handler'))
 	 * @param	int	$line
 	 * @return	void
 	 */
+	
 	function _error_handler($severity, $message, $filepath, $line)
 	{
 		$is_error = (((E_ERROR | E_COMPILE_ERROR | E_CORE_ERROR | E_USER_ERROR) & $severity) === $severity);
@@ -651,6 +682,8 @@ if ( ! function_exists('_exception_handler'))
 	 * @param	Exception	$exception
 	 * @return	void
 	 */
+	///在CodeIgniter.php中执行set_error_handler('_exception_handler');后，以后一切非致命(非fatal)错误信息都由它处理。
+	//触发错误的时候，会产生几个参数，错误级别（号），错误信息，错误文件，错误行。
 	function _exception_handler($exception)
 	{
 		$_error =& load_class('Exceptions', 'core');

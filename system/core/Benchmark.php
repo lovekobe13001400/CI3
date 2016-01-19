@@ -67,9 +67,11 @@ class CI_Benchmark {
 	 * @param	string	$name	Marker name
 	 * @return	void
 	 */
+	//这个方法其实很简单，就是在程序的任意地方调用地方法时，会记录当前的时间点。
 	public function mark($name)
 	{
 		$this->marker[$name] = microtime(TRUE);
+		
 	}
 
 	// --------------------------------------------------------------------
@@ -92,8 +94,19 @@ class CI_Benchmark {
 	 *			an '{elapsed_string}' if $point1 is empty
 	 *			or an empty string if $point1 is not found.
 	 */
+	//计算两个时间点的时间
 	public function elapsed_time($point1 = '', $point2 = '', $decimals = 4)
 	{
+		/*
+		* 如果没有给出明确的时间点，那么会计算出整个程序运行的时间。
+		* 怎么可以做到计算出整个程序的运行时间的呢？其实执行此计算的是Output组件。
+		* 而调用Benchmark::elapsed_time();（无参数）的时候，实质上先返回的并不是
+		* 整个程序运行的时间，也不可能做到，实质返回的是一个{elapsed_time}标签，然后
+		* Output在处理输出的时候，再计算出整个程序运行时间，因为处理输出阶段程序可以视
+		* 为处于最后阶段，于是可以近似计算出总时间，然后把输出中的{elapsed_time}替换掉。
+		* 下面的memory_usage()原理相同。
+		* 详见：core/Output.php 中的_display()方法。
+		*/
 		if ($point1 === '')
 		{
 			return '{elapsed_time}';

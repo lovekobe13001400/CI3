@@ -148,9 +148,11 @@ class CI_URI {
 	 * @param 	string	$str
 	 * @return	void
 	 */
+	//URI组件里面有很多方法，大都是一些辅助作用的方法，而此方法是URI最主线的一个方法。
 	protected function _set_uri_string($str)
 	{
 		// Filter out control characters and trim slashes
+		
 		$this->uri_string = trim(remove_invisible_characters($str, FALSE), '/');
 
 		if ($this->uri_string !== '')
