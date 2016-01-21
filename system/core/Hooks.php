@@ -92,6 +92,7 @@ class CI_Hooks {
 
 		// If hooks are not enabled in the config file
 		// there is nothing else to do
+		//要使用到的钩子，必须在配置目录下的hooks.php里面定义好。否则无法使用。
 		if ($CFG->item('enable_hooks') === FALSE)
 		{
 			return;
@@ -113,7 +114,7 @@ class CI_Hooks {
 		{
 			return;
 		}
-
+		//把钩子信息都保存到Hook组件中。
 		$this->hooks =& $hook;
 		$this->enabled = TRUE;
 	}
@@ -129,6 +130,10 @@ class CI_Hooks {
 	 *
 	 * @param	string	$which	Hook name
 	 * @return	bool	TRUE on success or FALSE on failure
+	 */
+	/**
+	 * Call Hook
+	 * 外部其实就是调用这个call_hook函数进行调用钩子程序。而此方法中再调用_run_hook去执行相应的钩子。
 	 */
 	public function call_hook($which = '')
 	{
@@ -165,7 +170,8 @@ class CI_Hooks {
 	protected function _run_hook($data)
 	{
 		// Closures/lambda functions and array($object, 'method') callables
-		if (is_callable($data))
+	    //一般来说，这个$data会有：类名，方法名，参数，类文件路径等参数。
+	    if (is_callable($data))
 		{
 			is_array($data)
 				? $data[0]->{$data[1]}()
@@ -184,6 +190,8 @@ class CI_Hooks {
 
 		// If the script being called happens to have the same
 		// hook call within it a loop can happen
+		//如果调用某一个hook，执行某些脚本，而有可能这些脚本里面再会触发其它hook，如果这个其它hook里面又包含了当前
+		//的hook，那么就会进入死循环，这个in_progress的存在就是阻止这种情况。
 		if ($this->_in_progress === TRUE)
 		{
 			return;

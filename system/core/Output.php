@@ -48,6 +48,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/output.html
  */
+/**
+ * Output Class
+ *
+ * Output组件其实有很多有用的方法，不过一般情况下，你不会直接去用到它们。
+ * 这里主要以Output::_display_cache()和Output::_display()为两条主线来探究。
+ */
 class CI_Output {
 
 	/**
@@ -153,6 +159,7 @@ class CI_Output {
 	 *
 	 * @return	string
 	 */
+	//返回最终输出
 	public function get_output()
 	{
 		return $this->final_output;
@@ -168,6 +175,7 @@ class CI_Output {
 	 * @param	string	$output	Output data
 	 * @return	CI_Output
 	 */
+	//设置最终输出
 	public function set_output($output)
 	{
 		$this->final_output = $output;
@@ -184,6 +192,8 @@ class CI_Output {
 	 * @param	string	$output	Data to append
 	 * @return	CI_Output
 	 */
+	//通过此方法给Output::$final_output加上输出内容，最终这些内容会在Output::_display()中被输出。
+	//此方法在Loader.php中被调用。详见Loader.php中的Loader::view()方法及Loader::_ci_load()方法。
 	public function append_output($output)
 	{
 		$this->final_output .= $output;
@@ -204,6 +214,7 @@ class CI_Output {
 	 * @param	bool	$replace	Whether to replace the old header value, if already set
 	 * @return	CI_Output
 	 */
+	//接下来的三个方法都是设置页面内容输出前的头信息。
 	public function set_header($header, $replace = TRUE)
 	{
 		// If zlib.output_compression is enabled it will compress the output,
@@ -339,6 +350,7 @@ class CI_Output {
 	 * @param	bool	$val	TRUE to enable or FALSE to disable
 	 * @return	CI_Output
 	 */
+	//是否开启评测器。
 	public function enable_profiler($val = TRUE)
 	{
 		$this->enable_profiler = is_bool($val) ? $val : TRUE;
@@ -382,6 +394,7 @@ class CI_Output {
 	 */
 	public function cache($time)
 	{
+	    //设置缓存时长。
 		$this->cache_expiration = is_numeric($time) ? $time : 0;
 		return $this;
 	}
@@ -407,6 +420,11 @@ class CI_Output {
 		// Note:  We use load_class() because we can't use $CI =& get_instance()
 		// since this function is sometimes called by the caching mechanism,
 		// which happens before the CI super object is available.
+	    //为什么这里要用global来调用这两个组件呢？不是可以通过$CI这个超级控制器来调用？
+	    //其实就是因为这个_display方法，被调用的方式有两种，其中有可能是在CodeIgniter.php中调用
+	    //Output::_display_cache();的时候间接被调用了，而此时& get_instance()这个方法压根还没
+	    //被定义。详见CodeIgniter.php中代码定义和调用的顺序。
+	    //& 是global的意思?
 		$BM =& load_class('Benchmark', 'core');
 		$CFG =& load_class('Config', 'core');
 
@@ -419,6 +437,8 @@ class CI_Output {
 		// --------------------------------------------------------------------
 
 		// Set the output data
+		//如果$output为空，其实往往这是非缓存方式调用的时候。我们将使用Output::final_output。（如果是正常流程的输出
+		//方式，而不是缓存的话，这个属性其实在Loader::view()的时候调用Output::append_output()获得输出内容。）
 		if ($output === '')
 		{
 			$output =& $this->final_output;
@@ -429,6 +449,10 @@ class CI_Output {
 		// Do we need to write a cache file? Only if the controller does not have its
 		// own _output() method and we are not dealing with a cache file, which we
 		// can determine by the existence of the $CI object above
+		//Output::$cache_expiration其实就是缓存时长，就是平时我们在控制器里面$this->output->cache(n)设置的时长
+		//现实手段就是使这个Output::$cache_expiration有一定的值，然后程序执行到这里时根据此值判断是否要缓存，
+		//如果要缓存就生成缓存文件。（注意如果是_display_cache间接调用的话，$this->cache_expiraton是一定为0的，因为
+		//没有经历过在控制器中调用$this->output->cache(n)。）
 		if ($this->cache_expiration > 0 && isset($CI) && ! method_exists($CI, '_output'))
 		{
 			$this->_write_cache($output);
@@ -443,6 +467,7 @@ class CI_Output {
 
 		if ($this->parse_exec_vars === TRUE)
 		{
+		    //系统的总体运行时间和内存消耗就是在这里替换的。呵呵。上面的Output::$parse_exec_vars就是设置要不要替换。
 			$memory	= round(memory_get_usage() / 1024 / 1024, 2).'MB';
 			$output = str_replace(array('{elapsed_time}', '{memory_usage}'), array($elapsed, $memory), $output);
 		}
@@ -473,6 +498,7 @@ class CI_Output {
 		// Does the $CI object exist?
 		// If not we know we are dealing with a cache file so we'll
 		// simply echo out the data and exit.
+		//如果没有超级控制器，可以证明当前是在处理一个缓存的输出。不过利用这个方式来判断，真的有点那个。。
 		if ( ! isset($CI))
 		{
 			if ($this->_compress_output === TRUE)
@@ -500,6 +526,7 @@ class CI_Output {
 
 		// Do we need to generate profile data?
 		// If so, load the Profile class and run it.
+		//这里是一个评测器，如果有开启就调用，会生成一些报告到页面尾部用于辅助我们调试。我用CI的时候其实没有开启过，厄。
 		if ($this->enable_profiler === TRUE)
 		{
 			$CI->load->library('profiler');
@@ -519,6 +546,7 @@ class CI_Output {
 
 		// Does the controller contain a function named _output()?
 		// If so send the output there.  Otherwise, echo it.
+		//如果我们有在当前的控制器里面定义了_output这个方法，那么可以利用这个输出做你想做的东西，这个也是很不错的功能。
 		if (method_exists($CI, '_output'))
 		{
 			$CI->_output($output);
@@ -539,6 +567,9 @@ class CI_Output {
 	 *
 	 * @param	string	$output	Output data to cache
 	 * @return	void
+	 */
+	/**
+	 * 写入缓存。在Output::_display()中，判断需要缓存页面时，则调用此方法写入缓存。
 	 */
 	public function _write_cache($output)
 	{
@@ -646,6 +677,8 @@ class CI_Output {
 	 * @param	object	&$URI	CI_URI class instance
 	 * @return	bool	TRUE on success or FALSE on failure
 	 */
+	//在CodeIgniter.php里面有调用此方法，此方法是负责缓存的输出，如果在CodeIgniter.php中调用此方法有输出，则
+	//本次请求的运行将直接结束，直接以缓存输出作为响应。
 	public function _display_cache(&$CFG, &$URI)
 	{
 		$cache_path = ($CFG->item('cache_path') === '') ? APPPATH.'cache/' : $CFG->item('cache_path');
@@ -727,7 +760,9 @@ class CI_Output {
 	public function delete_cache($uri = '')
 	{
 		$CI =& get_instance();
+		//取得保存缓存的路径
 		$cache_path = $CI->config->item('cache_path');
+		
 		if ($cache_path === '')
 		{
 			$cache_path = APPPATH.'cache/';
@@ -755,7 +790,7 @@ class CI_Output {
 				}
 			}
 		}
-
+		//一条准确的路由都会对应一个缓存文件，缓存文件是对应路由字符串的md5密文。
 		$cache_path .= md5($CI->config->item('base_url').$CI->config->item('index_page').ltrim($uri, '/'));
 
 		if ( ! @unlink($cache_path))
@@ -779,6 +814,7 @@ class CI_Output {
 	 * @param	int	$expiration	Timestamp of when should the requested page expire from cache
 	 * @return	void
 	 */
+	
 	public function set_cache_header($last_modified, $expiration)
 	{
 		$max_age = $expiration - $_SERVER['REQUEST_TIME'];

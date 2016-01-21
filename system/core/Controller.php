@@ -65,11 +65,14 @@ class CI_Controller {
 	 */
 	public function __construct()
 	{
+	    //通过self::$instance实现单例化，在第一次实例时，这个静态变量实质就是引用了这个实例。
+	    //以后都可以通过&get_instance();来获得这个单一实例。
 		self::$instance =& $this;
 
 		// Assign all the class objects that were instantiated by the
 		// bootstrap file (CodeIgniter.php) to local class variables
 		// so that CI can run as one big super object.
+		//把目前程序已经加载的所有的组件都给这个超级控制器来掌管。
 		foreach (is_loaded() as $var => $class)
 		{
 			$this->$var =& load_class($class);

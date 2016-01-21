@@ -48,6 +48,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/loader.html
  */
+/**
+ * Loader Class
+ *
+ * Loader组件在CI里面也是一个很重要的组件，功能也比较明了。
+ * 如果已经阅读过Controller组件，会发现Controller组件的代码也只有十来行，但它却可以做很多事，一定程度上
+ * 要归功于Loader组件这个好助手或者好基友。
+ * 不过Loader组件的代码真的不少，主要以常用的几个方法以主线来探讨：model(),view(),library(),helper();
+ */
 class CI_Loader {
 
 	// All these are set automatically. Don't mess with them.
@@ -154,6 +162,7 @@ class CI_Loader {
 	 */
 	public function initialize()
 	{
+	    //自动加载，加载项是你在config/autoload.php中设置的。
 		$this->_ci_autoloader();
 	}
 
@@ -186,6 +195,10 @@ class CI_Loader {
 	 * @param	array	$params		Optional parameters to pass to the library class constructor
 	 * @param	string	$object_name	An optional object name to assign to
 	 * @return	object
+	 */
+	/**
+	 * Class Loader
+	 * $library为相应的类名，$params为实例化此类的时候可能要用到的参数，$object_name为给这个类的实例自义定一个名字。
 	 */
 	public function library($library, $params = NULL, $object_name = NULL)
 	{
@@ -454,6 +467,11 @@ class CI_Loader {
 	 *				or leave it to the Output class
 	 * @return	object|string
 	 */
+	/**
+	 * Load View
+	 *
+	 * Loader::view();方法可以和Loader::file()方法一并来阅读，实质上它们都是调用了Loader::_ci_load();方法。
+	 */
 	public function view($view, $vars = array(), $return = FALSE)
 	{
 		return $this->_ci_load(array('_ci_view' => $view, '_ci_vars' => $this->_ci_object_to_array($vars), '_ci_return' => $return));
@@ -559,6 +577,9 @@ class CI_Loader {
 	 * @param	string|string[]	$helpers	Helper name(s)
 	 * @return	object
 	 */
+	//Loader::_ci_prep_filename()方法只是处理文件名，以返回正确的数组而已。
+	//默认helper的文件名是以_helper为后缀，所以参数可以不用写_helper后缀，当然写也不会出错，因为
+	//Loader::_ci_prep_filename()会帮你处理掉。
 	public function helper($helpers = array())
 	{
 		foreach ($this->_ci_prep_filename($helpers, '_helper') as $helper)
@@ -665,6 +686,7 @@ class CI_Loader {
 	 * @param	bool	$fail_gracefully	Whether to just return FALSE or display an error message
 	 * @return	bool	TRUE if the file was loaded correctly or FALSE on failure
 	 */
+	//这里的config方法，实质是完完全全调用Config组件的load方法而已。
 	public function config($file, $use_sections = FALSE, $fail_gracefully = FALSE)
 	{
 		return get_instance()->config->load($file, $use_sections, $fail_gracefully);
@@ -839,6 +861,7 @@ class CI_Loader {
 	protected function _ci_load($_ci_data)
 	{
 		// Set the default data variables
+	    //这里相当于把数组里面的元素拆开成变量。
 		foreach (array('_ci_view', '_ci_vars', '_ci_path', '_ci_return') as $_ci_val)
 		{
 			$$_ci_val = isset($_ci_data[$_ci_val]) ? $_ci_data[$_ci_val] : FALSE;
@@ -847,6 +870,9 @@ class CI_Loader {
 		$file_exists = FALSE;
 
 		// Set the path to the requested file
+		//当Loader::_ci_load()方法是通过Loader::file()调用的时候，则会有$_ci_path的值，如果是
+		//如果Loader::view()调用的话，则有$_ci_view的值。
+		//如果$_ci_path不为空，则说明当前要加载普通文件。
 		if (is_string($_ci_path) && $_ci_path !== '')
 		{
 			$_ci_x = explode('/', $_ci_path);
@@ -880,6 +906,11 @@ class CI_Loader {
 
 		// This allows anything loaded using $this->load (views, files, etc.)
 		// to become accessible from within the Controller and Model functions.
+		//下面这个也很关键，其实视图文件里面的代码都是在属于Loader组件的，什么意思？
+		//你可以随便写一个视图文件，然后在里面写上var_dump($this);可以发现，这个$this，是指Loader。
+		//为什么会这样子呢？再往下面十几行代码的地方就说明了这一点。
+		//这里是把CI所有的属性都开放给Loader组件用，这样在视图文件里面就可以通过$this->xxx的方式调用控制器
+		//所有的东西。
 		$_ci_CI =& get_instance();
 		foreach (get_object_vars($_ci_CI) as $_ci_key => $_ci_var)
 		{
@@ -897,6 +928,9 @@ class CI_Loader {
 		 * the two types and cache them so that views that are embedded within
 		 * other views can have access to these variables.
 		 */
+		//在这里把在控制器里面通过$this->load->view("xxx",$data);中的$data解开，这就是为什么可以在视图文件
+		//中可以用$data里面的变量的原因。其实还可以通过Loader::vars()方法，设置这些变量，它们会首先保存在
+		//Loader::$_ci_cached_vars中
 		if (is_array($_ci_vars))
 		{
 			$this->_ci_cached_vars = array_merge($this->_ci_cached_vars, $_ci_vars);
@@ -914,6 +948,7 @@ class CI_Loader {
 		 *	intercept the content right before it's sent to the browser and
 		 *	then stop the timer it won't be accurate.
 		 */
+		//我们在控制器中调用$this->load->view()方法，实质视图并没有马上输出来，而是先将它放到缓冲区。
 		ob_start();
 
 		// If the PHP installation does not support short tags we'll
@@ -978,6 +1013,7 @@ class CI_Loader {
 		// Get the class name, and while we're at it trim any slashes.
 		// The directory path can be included as part of the class name,
 		// but we don't want a leading slash
+	    //去掉后缀.php，是为了方便外部可以通过xxx.php也可以通过xxx.php来传入类名。同时去掉两端的/。
 		$class = str_replace('.php', '', trim($class, '/'));
 
 		// Was the path included with the class name?
@@ -1067,6 +1103,7 @@ class CI_Loader {
 	 * @param	string	$object_name	Optional object name to assign to
 	 * @return	void
 	 */
+	
 	protected function _ci_load_stock_library($library_name, $file_path, $params, $object_name)
 	{
 		$prefix = 'CI_';
@@ -1157,6 +1194,7 @@ class CI_Loader {
 	 * @param	string		$object_name	Optional object name to assign to
 	 * @return	void
 	 */
+	//此方法是用于实例化已经把类文件include进来的类。
 	protected function _ci_init_library($class, $prefix, $config = FALSE, $object_name = NULL)
 	{
 		// Is there an associated config file for this class? Note: these should always be lowercase

@@ -74,6 +74,11 @@ class CI_Model {
 		//	If you're here because you're getting an error message
 		//	saying 'Undefined Property: system/core/Model.php', it's
 		//	most likely a typo in your model code.
+	    /**
+	     * __get
+	     * Model类的代码也非常少，有用的方法就下面这一个，下面这个方法是为了在Model里面可以像控制器那么通过$this->
+	     * 做很多事情。例如想在model里面加载某个library，就可以$this->load->library(xxx)，其实它都是盗用controller的。
+	     */
 		return get_instance()->$key;
 	}
 
