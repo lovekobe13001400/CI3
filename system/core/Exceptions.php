@@ -154,6 +154,17 @@ class CI_Exceptions {
 	 *
 	 * @return	string	Error page output
 	 */
+	/**
+	 * 先解释一下show_php_error,show_error,和show_404之间的关系和区别。
+	 * show_php_error()是代码本身的一些错误，例如变量未定义之类的，平时我们调试的时候经常见到的一些错误，是不小心写错代码而导致的。
+	 * show_error()是有意识触发的错误，不是代码写错，而是代码不当，或者用户操作不当，比如找不到控制器，指定方法之类的，CI就show一
+	 * 个错误出来，当然开发者也可以调用此方法响应一个错误信息，某种程度上类似于catch到一个exception之后的处理，然后根据exception
+	 * 发出不同的提示信息。
+	 * show_404()是show_error()中的一种特殊情况，就是请求不存在的情况，响应一个404错误。
+	 */
+	/**
+	 * General Error Page
+	 */
 	public function show_error($heading, $message, $template = 'error_general', $status_code = 500)
 	{
 		$templates_path = config_item('error_views_path');
@@ -261,6 +272,17 @@ class CI_Exceptions {
 			$template = 'cli'.DIRECTORY_SEPARATOR.'error_php';
 		}
 
+		/*
+		 * 如果还没看过core/Loader.php，下面这个判断可能让人有点迷惑。
+		* ob_get_level()是取得当前缓冲机制的嵌套级别。（缓冲是可以一层嵌一层的。）
+		* 右边的$this->ob_level是在__construct()里面同样通过ob_get_level()被赋值的。
+		* 也就是说，有可能出现：Exception组件被加载时（也就是应用刚开始运行时）的缓冲级别（其实也就是程序最开始的时候的缓冲级别，那时
+		* 候是还没有ob_start()过的），与发生错误的时候的缓冲级别相差1。
+		* 在控制器执行$this->load->view("xxx");的时候，实质，Loader引入并执行这个视图文件的时候，是先把缓冲打开，即
+		* 先ob_start()，所有输出放到缓冲区（详见：core/Loader.php中的_ci_load()）,然后再由Output处理输出。
+		* 因此，如果是在视图文件发生错误，则就会出现缓冲级别相差1的情况，此时先把输出的内容给flush出来，然后再把错误信息输出。
+		*
+		*/
 		if (ob_get_level() > $this->ob_level + 1)
 		{
 			ob_end_flush();

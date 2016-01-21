@@ -116,6 +116,16 @@ class CI_Config {
 	 * @param	bool	$fail_gracefully	Whether to just return FALSE or display an error message
 	 * @return	bool	TRUE if the file was loaded correctly or FALSE on failure
 	 */
+	/**
+	 * Load Config File
+	 * 先解释一下load方法的参数，$file就是配置文件名。配置文件目录一般为应用目录(application)/config/下
+	 * 下面会有很多个针对不同方面配置的文件，而我们通过Config组件加载的配置信息都会保存在Config::$config这个
+	 * 属性里面，所以第二个参数$use_sections就是设置是否当前配置文件是否以独立一个数组的形式充当Config::$config
+	 * 的一个元素加入，如果为true，则$config是一个两层的数组，如果为false，则单纯将配置文件里面的配置信息合并。
+	 * 例如配置文件abc.php，如果为true，则会以$config['abc']['xxx']的形式保存，否则直接合并即会有
+	 * $config['xxx']。
+	 * 第三个参数只是设置要不要报错而已，如果为true，则只会返回false，如果为false则直接在函数执行时报错。
+	 */
 	public function load($file = '', $use_sections = FALSE, $fail_gracefully = FALSE)
 	{
 		$file = ($file === '') ? 'config' : str_replace('.php', '', $file);
@@ -187,6 +197,11 @@ class CI_Config {
 	 * @param	string	$index	Index name
 	 * @return	string|null	The configuration item or NULL if the item doesn't exist
 	 */
+	/**
+	 * Fetch a config file item
+	 * 取得某一配置项的内容，如果知道上面Config::load($file, $use_sections, $fail_gracefully);方法
+	 * 中$use_sections的意义的话，那个下面的$index意义就很容易理解了。
+	 */
 	public function item($item, $index = '')
 	{
 		if ($index == '')
@@ -205,6 +220,7 @@ class CI_Config {
 	 * @param	string		$item	Config item name
 	 * @return	string|null	The configuration item or NULL if the item doesn't exist
 	 */
+	//此方法仅仅是对配置信息进行一些修剪处理而已。
 	public function slash_item($item)
 	{
 		if ( ! isset($this->config[$item]))
