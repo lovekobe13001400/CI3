@@ -186,6 +186,12 @@ if ( ! is_php('5.4'))
  */
 	if ( ! empty($assign_to_config['subclass_prefix']))
 	{
+	    //这个get_config($replace)就是从配置文件里面读取信息，这里是读取config/config.php中的配置信息
+	    //这个参数$replace的作用是什么呢？就是临时把修改配置文件的意思，注意并没有从改变文件的值，这个改变只是
+	    //停留在内存的层面上。
+	    //而$assign_to_config['xxx'];是在index.php中定义的一个配置信息数组，这个配置数组要优先权要大于配置文件当中的。
+	    //所以这个判断的作用是，看看有没有在index.php里面定义了 $assign_to_config['subclass_prefix']，如果有的话，
+	    //就那把配置文件中的$config['subclass_prefix']的值改成这个。
 		get_config(array('subclass_prefix' => $assign_to_config['subclass_prefix']));
 	}
 
@@ -194,6 +200,7 @@ if ( ! is_php('5.4'))
  *  Should we use a Composer autoloader?
  * ------------------------------------------------------
  */
+	
 	if ($composer_autoload = config_item('composer_autoload'))
 	{
 		if ($composer_autoload === TRUE)
@@ -217,15 +224,19 @@ if ( ! is_php('5.4'))
  *  Start the timer... tick tock tick tock...
  * ------------------------------------------------------
  */
+	//load_class()是用来加载类的，准确来说，是用来取得某个类的一个单一实例。
+	//像下来的调用就是返回system/core/Benchmark的一个实例。core里面的大都是CI的组件。
 	$BM =& load_class('Benchmark', 'core');
 	$BM->mark('total_execution_time_start');
 	$BM->mark('loading_time:_base_classes_start');
 
-/*
- * ------------------------------------------------------
- *  Instantiate the hooks class
- * ------------------------------------------------------
- */
+ /**
+  * 这个hook也是非常非常棒的一个东西！它可以让我们很好地扩展和改造CI～
+  * 可以这样理解，一个应用从运行到结束这个期间，CI为我们保留了一些位置，在这些位置上面可以让开发人员放上所谓的
+  * “钩子”（其实就是一段程序啦！），在应用运行过程中，当运行到有可以放钩子的位置的时候，先检测开发人员有没有
+  * 实现这里的钩子，如果有就运行它。
+  * 有些地方甚至可以用自己写的钩子程序替代CI框架本来的程序。
+  */
 	$EXT =& load_class('Hooks', 'core');
 
 /*
@@ -233,6 +244,8 @@ if ( ! is_php('5.4'))
  *  Is there a "pre_system" hook?
  * ------------------------------------------------------
  */
+	//这里就有一个钩子啦。大概意思是：整个应用系统开始动了，这里要不要先让开发人员来一段程序？
+	//如果你定义了pre_system这个钩子，那么，其实它就是在这个位置运行的。
 	$EXT->call_hook('pre_system');
 
 /*
@@ -245,9 +258,11 @@ if ( ! is_php('5.4'))
  * depending on another class that uses it.
  *
  */
+	//取得配置组件。
 	$CFG =& load_class('Config', 'core');
 
 	// Do we have any manually set config items in the index.php file?
+	//如果有在index.php定义配置数组，那么就丢给配置组件CFG，以后就由CFG来保管了配置信息了。
 	if (isset($assign_to_config) && is_array($assign_to_config))
 	{
 		foreach ($assign_to_config as $key => $value)
@@ -323,6 +338,7 @@ if ( ! is_php('5.4'))
  *  Instantiate the UTF-8 class
  * ------------------------------------------------------
  */
+	//取得UTF－8组件
 	$UNI =& load_class('Utf8', 'core');
 
 /*
@@ -330,6 +346,7 @@ if ( ! is_php('5.4'))
  *  Instantiate the URI class
  * ------------------------------------------------------
  */
+	//取得URI组件。
 	$URI =& load_class('URI', 'core');
 
 /*
@@ -337,6 +354,12 @@ if ( ! is_php('5.4'))
  *  Instantiate the routing class and set the routing
  * ------------------------------------------------------
  */
+	//取得URI的好基友RTR, 
+	//RTR的这个_set_routing();其实做了非常多的事情。。详见core/Router.php。非常重要。
+	//这个$routing是在index.php入口文件中可以配置的一个数组。这里起到路由覆盖的作用。
+	//index.php里面配置的信息永远都是最优先的。
+	//在这里无论你请求的路由是什么，只要有配置$routing（当然要配对），就会被它重定向。
+	//所以我觉得这句话放在这个地方有点坑，上面_set_routing搞了那么久，一下子就被覆盖掉了。
 	$RTR =& load_class('Router', 'core', isset($routing) ? $routing : NULL);
 
 /*
@@ -344,6 +367,8 @@ if ( ! is_php('5.4'))
  *  Instantiate the output class
  * ------------------------------------------------------
  */
+	//输出组件。这个输出组件有什么用？输出不是$this->load->view()么？其实它们两个也是好基友。
+	//详见：core/Output.php core/Loader.php
 	$OUT =& load_class('Output', 'core');
 
 /*
@@ -351,6 +376,7 @@ if ( ! is_php('5.4'))
  *	Is there a valid cache file? If so, we're done...
  * ------------------------------------------------------
  */
+	//下面是输出缓存的处理，这里允许我们自己写个hook来取替代CI原来Output类的缓存输出。//如果可以输出缓存，那么就没有必要再做其它事了。输出结果后直接退出。
 	if ($EXT->call_hook('cache_override') === FALSE && $OUT->_display_cache($CFG, $URI) === TRUE)
 	{
 		exit;
@@ -361,6 +387,7 @@ if ( ! is_php('5.4'))
  * Load the security class for xss and csrf support
  * -----------------------------------------------------
  */
+	//取得安全组件（安全组件暂时不详讲，因为对于CI一个运作流程来说，它不是必要的。CI的安全处理以后会作为一个新话题来探讨）
 	$SEC =& load_class('Security', 'core');
 
 /*
@@ -368,6 +395,8 @@ if ( ! is_php('5.4'))
  *  Load the Input class and sanitize globals
  * ------------------------------------------------------
  */
+	//取得安全组件的好基友INPUT组件。（主要是结合安全组件作一些输入方面的安全处理，$this->input->post()这些常用的操作都是
+	//由它们两个负责的。）
 	$IN	=& load_class('Input', 'core');
 
 /*
@@ -375,6 +404,7 @@ if ( ! is_php('5.4'))
  *  Load the Language class
  * ------------------------------------------------------
  */
+	//语言组件。
 	$LANG =& load_class('Lang', 'core');
 
 /*
@@ -384,6 +414,8 @@ if ( ! is_php('5.4'))
  *
  */
 	// Load the base controller class
+	//引入控制器父类文件。这里和其它组件的引入方式不一样，用load_class();因为我们最终用到的并不是这个父类，
+	//而是我们自己写在application/controllers/下的某个由uri请求的控制器。
 	require_once BASEPATH.'core/Controller.php';
 
 	/**
@@ -393,11 +425,13 @@ if ( ! is_php('5.4'))
 	 *
 	 * @return object
 	 */
+	//定义get_instance();方法，通过调用CI_Controller::get_instance()可以实现单例化，
+	//调用此函数可方便以后直接取得当前应用控制器。
 	function &get_instance()
 	{
 		return CI_Controller::get_instance();
 	}
-
+	//和其它组件一样，控制器父类同样可以通过前缀的方式进行扩展。
 	if (file_exists(APPPATH.'core/'.$CFG->config['subclass_prefix'].'Controller.php'))
 	{
 		require_once APPPATH.'core/'.$CFG->config['subclass_prefix'].'Controller.php';
@@ -430,9 +464,10 @@ if ( ! is_php('5.4'))
 	$e404 = FALSE;
 	$class = ucfirst($RTR->class);
 	$method = $RTR->method;
-
 	if (empty($class) OR ! file_exists(APPPATH.'controllers/'.$RTR->directory.$class.'.php'))
 	{
+	    //其实如果能够进入这里，说明了上面的$RTR->_set_routing();在_validate_request()的时候一定是在请求默认控制器。
+	    //详见：core/Router.php
 		$e404 = TRUE;
 	}
 	else
@@ -441,8 +476,23 @@ if ( ! is_php('5.4'))
 
 		if ( ! class_exists($class, FALSE) OR $method[0] === '_' OR method_exists('CI_Controller', $method))
 		{
+		    
 			$e404 = TRUE;
 		}
+		/*
+		 * ------------------------------------------------------
+		*  Security check
+		* ------------------------------------------------------
+		*
+		*  下面主要进行一些方法上的验证。
+		*  因为毕竟我们是通过URI直接调用控制器里面的方法的，其实这是个很危险的事情。
+		*  必须要保证我们原本没想过要通过URI访问的方法不能访问。
+		*
+		*  CI里面规定以_下划线开头的方法，一般是作为非公开的方法，即使方法定义为public。
+		*  其实不仅仅是CI这么做，把非公开的方法名以_开头，是很好的一种规范。
+		*  第二个就是父类CI_Controller里面的方法也是不允许通过URI访问的。
+		*  如果URI请求这样的方法，那么会作为404处理。
+		*/
 		elseif (method_exists($class, '_remap'))
 		{
 			$params = array($method, array_slice($URI->rsegments, 2));
@@ -519,6 +569,7 @@ if ( ! is_php('5.4'))
  *  Is there a "pre_controller" hook?
  * ------------------------------------------------------
  */
+	//这里又一个钩子，这个钩子的位置往往都是在一些特殊的位置的，像这里就是发生在实例化控制器前。
 	$EXT->call_hook('pre_controller');
 
 /*
@@ -529,6 +580,7 @@ if ( ! is_php('5.4'))
 	// Mark a start point so we can benchmark the controller
 	$BM->mark('controller_execution_time_( '.$class.' / '.$method.' )_start');
 
+	//折腾了这么久，终于实例化我们想要的控制器
 	$CI = new $class();
 
 /*
@@ -562,7 +614,7 @@ if ( ! is_php('5.4'))
  */
 	if ($EXT->call_hook('display_override') === FALSE)
 	{
-		$OUT->_display();
+		$OUT->_display();//这里，把$this->load->view();里面缓冲的输出结果输出，基本上一个流程总算完成了。详见core/Output.php。
 	}
 
 /*
