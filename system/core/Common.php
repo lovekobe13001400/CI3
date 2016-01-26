@@ -162,6 +162,9 @@ if ( ! function_exists('load_class'))
 	//加载类。默认是加载libraries里面的，如果要加载核心组件，$directory就为'core'
 	function &load_class($class, $directory = 'libraries', $param = NULL)
 	{
+	    echo $class;//Benchmark
+	    echo $directory;//core
+	    exit();
 		static $_classes = array();
 
 		// Does the class exist? If so, we're done...
@@ -174,6 +177,9 @@ if ( ! function_exists('load_class'))
 
 		// Look for the class first in the local application/libraries folder
 		// then in the native system/libraries folder
+		//echo APPPATH,BASEPATH;exit();
+		//data/CI3/application,先application/libraries
+		//data/CI3/system,再system/libraries
 		foreach (array(APPPATH, BASEPATH) as $path)
 		{
 			if (file_exists($path.$directory.'/'.$class.'.php'))
@@ -182,6 +188,8 @@ if ( ! function_exists('load_class'))
 
 				if (class_exists($name, FALSE) === FALSE)
 				{
+				    //加载组件的类文件,比如input组件,如果自己没有写input组件,则会找BASEPATH路径也就是system/libraries/
+				    
 					require_once($path.$directory.'/'.$class.'.php');
 				}
 
@@ -233,13 +241,14 @@ if ( ! function_exists('is_loaded'))
 	 */
 	function &is_loaded($class = '')
 	{
+	    //$class 类名(Benchmark)
 		static $_is_loaded = array();
 
 		if ($class !== '')
 		{
 			$_is_loaded[strtolower($class)] = $class;
 		}
-
+	    //$_is_loaded结果:array(1) { ["benchmark"]=> string(9) "Benchmark" }
 		return $_is_loaded;
 	}
 }

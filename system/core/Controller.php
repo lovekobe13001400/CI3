@@ -67,17 +67,37 @@ class CI_Controller {
 	{
 	    //通过self::$instance实现单例化，在第一次实例时，这个静态变量实质就是引用了这个实例。
 	    //以后都可以通过&get_instance();来获得这个单一实例。
+	    //user controller集成ci_control,$this就是user对象
 		self::$instance =& $this;
-
-		// Assign all the class objects that were instantiated by the
+		// Assign(分配) all the class objects that were instantiated by the
 		// bootstrap file (CodeIgniter.php) to local class variables
 		// so that CI can run as one big super object.
+		
+		//var_dump(is_loaded()):
 		//把目前程序已经加载的所有的组件都给这个超级控制器来掌管。
+		/*以下是11个组件
+		array(11) { 
+		    ["benchmark"]=> string(9)"Benchmark" 
+		    ["hooks"]=> string(5) "Hooks" 
+		    ["config"]=> string(6) "Config" 
+		    ["log"]=> string(3) "Log" 
+		    ["utf8"]=> string(4) "Utf8" 
+		    ["uri"]=> string(3) "URI" 
+		    ["router"]=> string(6) "Router" 
+		    ["output"]=> string(6) "Output" 
+		    ["security"]=> string(8) "Security" 
+		    ["input"]=> string(5) "Input" 
+		    ["lang"]=> string(4) "Lang"
+		}
+		*/
 		foreach (is_loaded() as $var => $class)
 		{
+		    echo $class;exit();  //Benchmark
 			$this->$var =& load_class($class);
+			var_dump($this->$var);exit();
+			exit();
 		}
-
+        var_dump(self::$instance);
 		$this->load =& load_class('Loader', 'core');
 		$this->load->initialize();
 		log_message('info', 'Controller Class Initialized');
