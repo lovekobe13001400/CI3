@@ -246,10 +246,17 @@ class CI_Loader {
 	 */
 	public function model($model, $name = '', $db_conn = FALSE)
 	{
+	    //可能自动加载的时候加载过这个model,那时候$model为空,搞清楚什么时候加载了先$model
+	    /*
+	    if(!empty($model)){
+	    	echo $model;
+	    }
+	    */
 		if (empty($model))
 		{
 			return $this;
 		}
+		//可以用数组形式,加载多个model
 		elseif (is_array($model))
 		{
 			foreach ($model as $key => $value)
@@ -259,7 +266,6 @@ class CI_Loader {
 
 			return $this;
 		}
-
 		$path = '';
 
 		// Is the model in a sub-folder? If so, parse out the filename and path.
@@ -295,7 +301,7 @@ class CI_Loader {
 				$db_conn = '';
 			}
 
-			$this->database($db_conn, FALSE, TRUE);
+			$this->database($db_conn, FALSE, TRUE);//加载database
 		}
 
 		if ( ! class_exists('CI_Model', FALSE))
@@ -331,9 +337,15 @@ class CI_Loader {
 		{
 			throw new RuntimeException("Class ".$model." already exists and doesn't extend CI_Model");
 		}
-
+		/*
+		if(!empty($model)){
+		    var_dump($CI);exit();//
+		    echo $name;//user_model
+            var_dump($this->_ci_models);exit();
+		}
+		*/
 		$this->_ci_models[] = $name;
-		$CI->$name = new $model();
+		$CI->$name = new $model();//实例化这个user_model类
 		return $this;
 	}
 
@@ -1313,6 +1325,9 @@ class CI_Loader {
 		}
 
 		// Autoload packages
+		//加载了autoload.php,$autoload是需要加载的数组
+		///var_dump($autoload);exit();
+		//array(7) { ["packages"]=> array(0) { } ["libraries"]=> array(0) { } ["drivers"]=> array(0) { } ["helper"]=> array(0) { } ["config"]=> array(0) { } ["language"]=> array(0) { } ["model"]=> array(0) { } }
 		if (isset($autoload['packages']))
 		{
 			foreach ($autoload['packages'] as $package_path)

@@ -162,9 +162,9 @@ if ( ! function_exists('load_class'))
 	//加载类。默认是加载libraries里面的，如果要加载核心组件，$directory就为'core'
 	function &load_class($class, $directory = 'libraries', $param = NULL)
 	{
-	    echo $class;//Benchmark
-	    echo $directory;//core
-	    exit();
+	    //echo $class;//Benchmark
+	    //echo $directory;//core为什么是core还是没搞清楚
+	    //exit();
 		static $_classes = array();
 
 		// Does the class exist? If so, we're done...
@@ -198,6 +198,12 @@ if ( ! function_exists('load_class'))
 		}
 
 		// Is the request a class extension? If so we load it too
+		////这里就用到的前缀扩展，如果在应用目录相应的目录下，有自己写的一些对CI库的扩展，那么我们加载的是它，而不是
+  //原来的。因为我们写的扩展是继承了CI原来的。
+  //所以可以看出，即使是CI的核心组件（core/下面的）我们都可以为之进行扩展 ,一样的函数肯定用扩展中的函数
+		//echo APPPATH.$directory.'/'.config_item('subclass_prefix').$class.'.php';exit();
+		///data/ci3/application/core/MY_Benchmark.php
+		//var_dump(config_item('subclass_prefix'));exit();//"MY_" 自己的扩展名前缀未MY_
 		if (file_exists(APPPATH.$directory.'/'.config_item('subclass_prefix').$class.'.php'))
 		{
 			$name = config_item('subclass_prefix').$class;
@@ -213,6 +219,8 @@ if ( ! function_exists('load_class'))
 		{
 			// Note: We use exit() rather than show_error() in order to avoid a
 			// self-referencing loop with the Exceptions class
+		    //这里用的是exit();来提示错误，而不是用show_error();这是因为这个load_class的错误有可能
+		    //在加载Exception组件之前发。
 			set_status_header(503);
 			echo 'Unable to locate the specified class: '.$class.'.php';
 			exit(5); // EXIT_UNK_CLASS
@@ -224,6 +232,7 @@ if ( ! function_exists('load_class'))
 		$_classes[$class] = isset($param)
 			? new $name($param)
 			: new $name();
+		//var_dump($_classes[$class]);exit();//object(CI_Benchmark)#1 (1) { ["marker"]=> array(0) { } }
 		return $_classes[$class];
 	}
 }

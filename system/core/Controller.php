@@ -92,14 +92,16 @@ class CI_Controller {
 		*/
 		foreach (is_loaded() as $var => $class)
 		{
-		    echo $class;exit();  //Benchmark
-			$this->$var =& load_class($class);
-			var_dump($this->$var);exit();
-			exit();
+		    //echo $class;exit();  //Benchmark
+			$this->$var =& load_class($class);//加载组件,其实就是加载core中对应的组件php文件
+			//var_dump($this->$var);exit();
+			//结果:object(CI_Benchmark)#1 (1) { ["marker"]=> array(4) { ["total_execution_time_start"]=> float(1453869160.7867) ["loading_time:_base_classes_start"]=> float(1453869160.7868) ["loading_time:_base_classes_end"]=> float(1453869160.8501) ["controller_execution_time_( User / login )_start"]=> float(1453869160.8523) } }
+			//exit();
 		}
-        var_dump(self::$instance);
-		$this->load =& load_class('Loader', 'core');
-		$this->load->initialize();
+		$this->load =& load_class('Loader', 'core');//加载load组件,为什么不像上面那样加载呢?
+		//var_dump($this->load);exit();
+		//初始化Loader组件，详细Loader.php
+		$this->load->initialize();//会把需要加载的内容全部提前加载完毕
 		log_message('info', 'Controller Class Initialized');
 	}
 
