@@ -58,7 +58,10 @@ $config['uri_protocol']	= 'REQUEST_URI';
 |
 | http://codeigniter.com/user_guide/general/urls.html
 */
-$config['url_suffix'] = '';
+//http://localhost/ci3/index.php/user/userlist.html
+//user控制下的userlist方法
+$config['url_suffix'] = '.html';
+
 
 /*
 |--------------------------------------------------------------------------

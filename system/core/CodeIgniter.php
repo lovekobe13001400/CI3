@@ -72,7 +72,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  */
 //定义CI版本
 	define('CI_VERSION', '3.0.2');
-
+//echo BASEPATH;///data/ci3/system///系统目录
+//echo APPPATH;///data/ci3/application///应用目录
 /*
  * ------------------------------------------------------
  *  Load the framework constants
@@ -83,19 +84,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	//constants.php是系统常量文件的配置
 	//加载配置的常量。这个配置文件里面默认已经有一些和文件有关的常量。
  
- //下面这个判断可以看出一开始我们在index.php里面定义的那个ENVIRONMENT的作用之一，如果是定义某个环境，
- //会调用相应的配置文件，这样就可以使得应用在相应的环境中运行。不仅仅是这个常量的配置文件是这样子，
- //以后你会发现，其实全部配置文件都是先判断当前环境再引入。
- //方便切换，只需在index.php里面改一下ENVIRONMENT的值。
+    //下面这个判断可以看出一开始我们在index.php里面定义的那个ENVIRONMENT的作用之一，如果是定义某个环境，
+    //会调用相应的配置文件，这样就可以使得应用在相应的环境中运行。不仅仅是这个常量的配置文件是这样子，
+    //以后你会发现，其实全部配置文件都是先判断当前环境再引入。
+    //方便切换，只需在index.php里面改一下ENVIRONMENT的值。
 	//当然啦，如果压根没有这个环境下的配置文件，就会调用默认的。CI手册上也有说，各种环境下的相同的配置文件，可以直接放在
 	//config/下，而不需要每个环境的目录下都有。
 	if (file_exists(APPPATH.'config/'.ENVIRONMENT.'/constants.php'))
 	{
 		require_once(APPPATH.'config/'.ENVIRONMENT.'/constants.php');
 	}
-
 	require_once(APPPATH.'config/constants.php');
-
 /*
  * ------------------------------------------------------
  *  Load the global functions

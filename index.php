@@ -58,6 +58,11 @@
 define('ENVIRONMENT', 'dev' === get_cfg_var('env') ? 'development' : 'production');
 获取当前环境
 */
+/**
+ * 之所以配置ENVIRONMENT,是因为很多组件都依赖于ENVIRONMENT
+ * 例如，在系统进入测试阶段时，database配置为测试的数据库，而在系统测试完毕时，database切换到线上的数据库。
+ * 这好比是用一个开关控制了系统的环境切换，自然是非常方便的。
+ */
 	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
 
 /*
@@ -204,7 +209,7 @@ switch (ENVIRONMENT)
 	{
 		chdir(dirname(__FILE__));
 	}
-	////获取觉得绝对路径,减少php的一些检测机制。
+	////获取绝对路径,减少php的一些检测机制。
 	if (($_temp = realpath($system_path)) !== FALSE)
 	{
 		$system_path = $_temp.'/';
